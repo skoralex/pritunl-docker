@@ -1,19 +1,20 @@
-version: '2'
+version: '3'
 services:
   mongo:
     container_name: mongo
-    image: mongo:3.2
+    image: mongo:${MONGO_VERSION}
     networks:
       - pritunl
-    ports:
-      - "27017:27017"
-    restart: always
     volumes:
-      - /opt/mongo/data:/data/db
+      - mongo_data:/data/db
   pritunl:
     container_name: pritunl
-    build: .
-    image: pritunl
+    image: skoralex/pritunl:${VERSION}
+    build: 
+      context: .
+      args:
+        VERSION: ${VERSION}
+        GO_VERSION: ${GO_VERSION}
     depends_on:
       - mongo
     networks:
@@ -22,8 +23,14 @@ services:
       - "80:80"
       - "443:443"
       - "1194:1194/udp"
+    volumes:
+      - pritunl_data:/var/lib/pritunl
+#      - ./pritunl.conf:/etc/pritunl.conf
     privileged: true
-    restart: always
 
 networks:
   pritunl:
+volumes:
+  mongo_data:
+  pritunl_data:
+

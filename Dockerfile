@@ -1,33 +1,35 @@
-FROM alpine:3.10
-MAINTAINER Victor Trac <victor@cloudkite.io>
+ARG GO_VERSION
 
-ENV VERSION="1.29.2547.95"
+FROM golang:${GO_VERSION}-alpine
 
+ARG VERSION
 # Build deps
-RUN apk --no-cache add --update go git bzr wget py2-pip \ 
-    gcc python python-dev make musl-dev linux-headers libffi-dev openssl-dev \
-    py-setuptools openssl procps ca-certificates openvpn 
-    
-RUN pip install --upgrade pip 
+RUN apk add --update git wget py3-pip \
+    gcc python3 python3-dev make musl-dev linux-headers libffi-dev openssl-dev \
+    py-setuptools openssl procps ca-certificates openvpn \
+    && pip install --upgrade pip \
+    && rm -rf /root/.cache/* \
+    && rm -rf /tmp/* /var/cache/apk/*
 
-# Pritunl Install
+# Pritunl Build
 RUN export GOPATH=/go \
     && go get github.com/pritunl/pritunl-dns \
     && go get github.com/pritunl/pritunl-web \
-    && cp /go/bin/* /usr/bin/ 
+    && cp /go/bin/* /usr/bin/ \
+    && rm -rf /root/.cache/* \
+    && rm -rf /tmp/* /var/cache/apk/*
 
 RUN wget https://github.com/pritunl/pritunl/archive/${VERSION}.tar.gz \
     && tar zxvf ${VERSION}.tar.gz \
+    && export CRYPTOGRAPHY_DONT_BUILD_RUST=1 \
     && cd pritunl-${VERSION} \
-    && python setup.py build \
     && pip install -r requirements.txt \
-    && python2 setup.py install \
+    && python3 setup.py build \
+    && python3 setup.py install \
     && cd .. \
     && rm -rf *${VERSION}* \
+    && rm -rf /root/.cache/* \
     && rm -rf /tmp/* /var/cache/apk/*
-
-RUN sed -i -e '/^attributes/a prompt\t\t\t= yes' /etc/ssl/openssl.cnf
-RUN sed -i -e '/countryName_max/a countryName_value\t\t= US' /etc/ssl/openssl.cnf
 
 ADD rootfs /
 
