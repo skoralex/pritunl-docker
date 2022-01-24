@@ -1,0 +1,13 @@
+FROM python:2.7
+
+ARG VERSION
+# Build deps
+RUN pip2 install requests \
+    && rm -rf /root/.cache/* \
+    && rm -rf /tmp/* /var/cache/apk/*
+
+RUN wget https://github.com/pritunl/pritunl/archive/${VERSION}.tar.gz \
+    && tar zxvf ${VERSION}.tar.gz \
+    && cd pritunl-${VERSION}
+
+ENTRYPOINT ["/bin/bash"]
